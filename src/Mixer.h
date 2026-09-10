@@ -1,14 +1,12 @@
 #pragma once
-
 #include "AudioBuffer.h"
-
+#include "Project.h"
 #include <cstddef>
+#include <vector>
 
 class Mixer
 {
 public:
-    // Mix source into destination starting at startSample.
-    // volume = 1.0 means normal volume.
     static void mix(
         EditorAudioBuffer& destination,
         const EditorAudioBuffer& source,
@@ -16,15 +14,22 @@ public:
         float volume = 1.0f
     );
 
-    // Mix with volume and stereo pan.
-    // pan = -1.0 = full left
-    // pan =  0.0 = center
-    // pan =  1.0 = full right
     static void mixPanned(
         EditorAudioBuffer& destination,
         const EditorAudioBuffer& source,
         std::size_t startSample,
         float volume,
         float pan
+    );
+
+    static void mixTrack(
+        EditorAudioBuffer& destination,
+        const Track& track,
+        std::size_t startSample
+    );
+
+    static void mixTracks(
+        EditorAudioBuffer& destination,
+        const std::vector<Track>& tracks
     );
 };

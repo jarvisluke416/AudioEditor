@@ -1,5 +1,6 @@
 #include "Mixer.h"
 #include <algorithm>
+#include <cmath>
 
 void Mixer::mix(
     EditorAudioBuffer& destination,
@@ -32,11 +33,19 @@ void Mixer::mixPanned(
 {
     pan = std::clamp(pan, -1.0f, 1.0f);
 
+    constexpr double PI =
+        3.14159265358979323846;
+
+    const double angle =
+        (static_cast<double>(pan) + 1.0) *
+        0.25 *
+        PI;
+
     const float leftGain =
-        0.5f * (1.0f - pan);
+        static_cast<float>(std::cos(angle)) * volume;
 
     const float rightGain =
-        0.5f * (1.0f + pan);
+        static_cast<float>(std::sin(angle)) * volume;
 
     for (std::size_t i = 0; i < source.size(); ++i)
     {
@@ -48,8 +57,8 @@ void Mixer::mixPanned(
 
         destination.add(
             destinationSample,
-            source.left()[i] * volume * leftGain,
-            source.right()[i] * volume * rightGain
+            source.left()[i] * leftGain,
+            source.right()[i] * rightGain
         );
     }
 }

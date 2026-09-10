@@ -12,12 +12,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # JUCE
 add_subdirectory(JUCE)
 
-    juce_add_gui_app(AudioEditor
+juce_add_gui_app(AudioEditor
     PRODUCT_NAME "AudioEditor"
     COMPANY_NAME "AudioEditor"
     NEEDS_WEB_BROWSER FALSE
     NEEDS_CURL FALSE
 )
+
 juce_generate_juce_header(AudioEditor)
 
 target_sources(AudioEditor
@@ -28,6 +29,7 @@ target_sources(AudioEditor
 
         src/Parser.cpp
         src/Parser.h
+        src/Project.h
 
         src/WavWriter.cpp
         src/WavWriter.h
@@ -42,6 +44,9 @@ target_sources(AudioEditor
         src/Mixer.h
 
         src/AudioBuffer.h
+
+        src/ProjectRenderer.cpp
+        src/ProjectRenderer.h
 )
 
 target_include_directories(AudioEditor
@@ -52,8 +57,11 @@ target_include_directories(AudioEditor
 target_link_libraries(AudioEditor
     PRIVATE
         juce::juce_gui_extra
-        juce::juce_audio_basics
+        juce::juce_audio_utils
         juce::juce_audio_formats
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_processors
         juce::juce_core
 )
 

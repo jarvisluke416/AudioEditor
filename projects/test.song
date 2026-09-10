@@ -1,5 +1,4 @@
 TEMPO 120
-
 TRACK 1 INSTRUMENT
 LENGTH 8
 
@@ -15,3 +14,10 @@ GUITAR A4 4 1
 GUITAR C5 4 1
 
 DRUM KICK 4
+
+TRACK 2 AUDIO
+LENGTH 8
+FILE C:\Users\kalaj\Downloads\128302__xenonn__layered-gunshot-8.wav
+START 0
+VOLUME 1.0
+PAN 0.0
