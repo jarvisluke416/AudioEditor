@@ -94,20 +94,14 @@ EditorAudioBuffer ProjectRenderer::render(
         }
 
         // ------------------------------------------
-        // Audio tracks
+        // Audio
+        //
+        // The actual audio length is determined after
+        // loading the file below.
         // ------------------------------------------
 
-        if (track.type == TrackType::Audio)
+        if (!track.audioFile.empty())
         {
-            if (track.audioFile.empty())
-            {
-                throw std::runtime_error(
-                    "Audio track " +
-                    std::to_string(track.number) +
-                    " has no FILE specified."
-                );
-            }
-
             totalBeats =
                 std::max(
                     totalBeats,
@@ -120,9 +114,7 @@ EditorAudioBuffer ProjectRenderer::render(
         totalBeats = 1.0;
 
     // ==================================================
-    // Load audio files first.
-    //
-    // This lets us determine their real duration.
+    // Load audio files
     // ==================================================
 
     struct LoadedAudio
@@ -135,7 +127,7 @@ EditorAudioBuffer ProjectRenderer::render(
 
     for (const auto& track : project.tracks)
     {
-        if (track.type != TrackType::Audio)
+        if (track.audioFile.empty())
             continue;
 
         try
@@ -202,7 +194,7 @@ EditorAudioBuffer ProjectRenderer::render(
     }
 
     // ==================================================
-    // Calculate final output size.
+    // Calculate final output size
     // ==================================================
 
     const double totalSeconds =
@@ -224,7 +216,7 @@ EditorAudioBuffer ProjectRenderer::render(
     }
 
     // ==================================================
-    // Create master output buffer.
+    // Create master output buffer
     // ==================================================
 
     EditorAudioBuffer output(
@@ -236,261 +228,206 @@ EditorAudioBuffer ProjectRenderer::render(
     bool renderedAudioData = false;
 
     // ==================================================
-    // Render every track.
+    // Render every track
     // ==================================================
 
     for (const auto& track : project.tracks)
     {
         // ==================================================
-        // INSTRUMENT TRACK
+        // Every track gets an instrument buffer.
+        //
+        // This allows instruments, drums, and AUDIO
+        // to coexist on the same track.
         // ==================================================
 
-        if (track.type == TrackType::Instrument)
+        EditorAudioBuffer trackBuffer(
+            totalSamples,
+            sampleRate
+        );
+
+        bool hasTrackData = false;
+
+        // ==================================================
+        // Render melodic instruments
+        // ==================================================
+
+        for (const auto& note : track.notes)
         {
-            EditorAudioBuffer trackBuffer(
-                totalSamples,
-                sampleRate
-            );
+            if (note.durationBeats <= 0.0)
+                continue;
 
-            // ------------------------------------------
-            // Render melodic instruments.
-            // ------------------------------------------
-
-            for (const auto& note : track.notes)
-            {
-                if (note.durationBeats <= 0.0)
-                    continue;
-
-                SimpleSynth::renderNote(
-                    trackBuffer,
-                    note.instrument,
-                    note.midiNote,
-                    note.startBeat,
-                    note.durationBeats,
-                    project.tempo
-                );
-
-                renderedInstrumentData = true;
-            }
-
-            // ------------------------------------------
-            // Render drums.
-            // ------------------------------------------
-
-            for (const auto& drum : track.drums)
-            {
-                switch (drum.drum)
-                {
-                    case DrumType::Kick:
-                    {
-                        SimpleSynth::renderKick(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Snare:
-                    {
-                        SimpleSynth::renderSnare(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::HiHat:
-                    {
-                        SimpleSynth::renderHiHat(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo,
-                            false
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::OpenHiHat:
-                    {
-                        SimpleSynth::renderHiHat(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo,
-                            true
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Clap:
-                    {
-                        SimpleSynth::renderClap(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Rimshot:
-                    {
-                        SimpleSynth::renderRimshot(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::LowTom:
-                    {
-                        SimpleSynth::renderTom(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo,
-                            110.0
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::MidTom:
-                    {
-                        SimpleSynth::renderTom(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo,
-                            180.0
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::HighTom:
-                    {
-                        SimpleSynth::renderTom(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo,
-                            280.0
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Tom:
-                    {
-                        SimpleSynth::renderTom(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo,
-                            190.0
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Crash:
-                    {
-                        SimpleSynth::renderCrash(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Ride:
-                    {
-                        SimpleSynth::renderRide(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Cowbell:
-                    {
-                        SimpleSynth::renderCowbell(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Tambourine:
-                    {
-                        SimpleSynth::renderTambourine(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-
-                    case DrumType::Shaker:
-                    {
-                        SimpleSynth::renderShaker(
-                            trackBuffer,
-                            drum.startBeat,
-                            project.tempo
-                        );
-
-                        renderedInstrumentData = true;
-                        break;
-                    }
-                }
-            }
-
-            // ------------------------------------------
-            // Mix instrument track into master.
-            // ------------------------------------------
-
-            Mixer::mixPanned(
-                output,
+            SimpleSynth::renderNote(
                 trackBuffer,
-                0,
-                static_cast<float>(
-                    track.volume
-                ),
-                static_cast<float>(
-                    track.pan
-                )
+                note.instrument,
+                note.midiNote,
+                note.startBeat,
+                note.durationBeats,
+                project.tempo
             );
+
+            hasTrackData = true;
+            renderedInstrumentData = true;
         }
 
         // ==================================================
-        // AUDIO TRACK
+        // Render drums
         // ==================================================
 
-        else if (track.type == TrackType::Audio)
+        for (const auto& drum : track.drums)
+        {
+            switch (drum.drum)
+            {
+                case DrumType::Kick:
+                {
+                    SimpleSynth::renderKick(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::Snare:
+                {
+                    SimpleSynth::renderSnare(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::HiHat:
+                {
+                    SimpleSynth::renderHiHat(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo,
+                        false);
+                    break;
+                }
+
+                case DrumType::OpenHiHat:
+                {
+                    SimpleSynth::renderHiHat(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo,
+                        true);
+                    break;
+                }
+
+                case DrumType::Clap:
+                {
+                    SimpleSynth::renderClap(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::Rimshot:
+                {
+                    SimpleSynth::renderRimshot(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::LowTom:
+                {
+                    SimpleSynth::renderTom(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo,
+                        110.0);
+                    break;
+                }
+
+                case DrumType::MidTom:
+                {
+                    SimpleSynth::renderTom(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo,
+                        180.0);
+                    break;
+                }
+
+                case DrumType::HighTom:
+                {
+                    SimpleSynth::renderTom(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo,
+                        280.0);
+                    break;
+                }
+
+                case DrumType::Tom:
+                {
+                    SimpleSynth::renderTom(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo,
+                        190.0);
+                    break;
+                }
+
+                case DrumType::Crash:
+                {
+                    SimpleSynth::renderCrash(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::Ride:
+                {
+                    SimpleSynth::renderRide(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::Cowbell:
+                {
+                    SimpleSynth::renderCowbell(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::Tambourine:
+                {
+                    SimpleSynth::renderTambourine(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+
+                case DrumType::Shaker:
+                {
+                    SimpleSynth::renderShaker(
+                        trackBuffer,
+                        drum.startBeat,
+                        project.tempo);
+                    break;
+                }
+            }
+
+            hasTrackData = true;
+            renderedInstrumentData = true;
+        }
+
+        // ==================================================
+        // Mix AUDIO belonging to this same track
+        // ==================================================
+
+        if (!track.audioFile.empty())
         {
             const auto loaded =
                 std::find_if(
@@ -514,10 +451,6 @@ EditorAudioBuffer ProjectRenderer::render(
             const EditorAudioBuffer& audio =
                 loaded->audio;
 
-            // ------------------------------------------
-            // Convert start beat to sample position.
-            // ------------------------------------------
-
             const double startSeconds =
                 track.audioStartBeat *
                 secondsPerBeat;
@@ -534,13 +467,31 @@ EditorAudioBuffer ProjectRenderer::render(
             }
 
             // ------------------------------------------
-            // Mix audio into master.
+            // Mix audio into this track's buffer.
             // ------------------------------------------
 
             Mixer::mixPanned(
-                output,
+                trackBuffer,
                 audio,
                 startSample,
+                1.0f,
+                0.0f
+            );
+
+            hasTrackData = true;
+            renderedAudioData = true;
+        }
+
+        // ==================================================
+        // Mix completed track into master
+        // ==================================================
+
+        if (hasTrackData)
+        {
+            Mixer::mixPanned(
+                output,
+                trackBuffer,
+                0,
                 static_cast<float>(
                     track.volume
                 ),
@@ -548,13 +499,11 @@ EditorAudioBuffer ProjectRenderer::render(
                     track.pan
                 )
             );
-
-            renderedAudioData = true;
         }
     }
 
     // ==================================================
-    // Verify that something rendered.
+    // Verify that something rendered
     // ==================================================
 
     if (!renderedInstrumentData &&
@@ -569,10 +518,6 @@ EditorAudioBuffer ProjectRenderer::render(
 
     // ==================================================
     // MASTER PROCESSING
-    //
-    // Strong volume boost followed by soft limiting.
-    // This keeps the mix loud without allowing huge
-    // values to blow up the WAV.
     // ==================================================
 
     constexpr float masterGain = 1.65f;
@@ -588,10 +533,6 @@ EditorAudioBuffer ProjectRenderer::render(
         float right =
             output.right()[i] *
             masterGain;
-
-        // ------------------------------------------
-        // Soft saturation / limiter.
-        // ------------------------------------------
 
         left = std::tanh(left);
         right = std::tanh(right);

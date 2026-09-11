@@ -194,17 +194,39 @@ Project Parser::parseFile(const std::string& filename)
         }
 
         // ==================================================
-        // AUDIO FILE
+        // AUDIO
+        //
+        // New preferred syntax:
+        //
+        // AUDIO "vocal.wav" 0
+        //
+        // This allows audio to live on the same track
+        // as instruments and drums.
         // ==================================================
 
-        if (command == "FILE")
+        if (command == "AUDIO")
         {
             std::string audioFilename;
+            double startBeat = 0.0;
 
             if (!(ss >> audioFilename))
             {
                 throw std::runtime_error(
                     "Missing audio filename."
+                );
+            }
+
+            if (!(ss >> startBeat))
+            {
+                throw std::runtime_error(
+                    "Missing AUDIO start beat."
+                );
+            }
+
+            if (startBeat < 0.0)
+            {
+                throw std::runtime_error(
+                    "AUDIO start beat cannot be negative."
                 );
             }
 
@@ -223,11 +245,50 @@ Project Parser::parseFile(const std::string& filename)
             currentTrack->audioFile =
                 audioFilename;
 
+            currentTrack->audioStartBeat =
+                startBeat;
+
             continue;
         }
 
         // ==================================================
-        // AUDIO START
+        // Legacy AUDIO FILE
+        //
+        // FILE "vocal.wav"
+        // ==================================================
+
+        if (command == "FILE")
+        {
+            std::string audioFilename;
+
+            if (!(ss >> audioFilename))
+            {
+                throw std::runtime_error(
+                    "Missing audio filename."
+                );
+            }
+
+            if (audioFilename.size() >= 2 &&
+                audioFilename.front() == '"' &&
+                audioFilename.back() == '"')
+            {
+                audioFilename =
+                    audioFilename.substr(
+                        1,
+                        audioFilename.size() - 2
+                    );
+            }
+
+            currentTrack->audioFile =
+                audioFilename;
+
+            continue;
+        }
+
+        // ==================================================
+        // Legacy AUDIO START
+        //
+        // START 0
         // ==================================================
 
         if (command == "START")
@@ -258,12 +319,6 @@ Project Parser::parseFile(const std::string& filename)
         {
             // ==================================================
             // DRUM
-            //
-            // Example:
-            //
-            // DRUM KICK 0
-            // DRUM SNARE 2
-            // DRUM CRASH 4
             // ==================================================
 
             if (command == "DRUM")
@@ -302,13 +357,6 @@ Project Parser::parseFile(const std::string& filename)
 
             // ==================================================
             // NOTE
-            //
-            // Examples:
-            //
-            // GUITAR C4 0 1
-            // PIANO E4 1 1
-            // BASS C2 2 2
-            // SYNTHLEAD G4 4 1
             // ==================================================
 
             std::string noteName;

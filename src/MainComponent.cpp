@@ -5,6 +5,17 @@
 #include "ProjectRenderer.h"
 #include "WavWriter.h"
 #include <stdexcept>
+#include <algorithm>
+
+// ==================================================
+// Forward declarations
+// ==================================================
+
+static juce::String cleanEditorProjectText(
+    const juce::String& originalText);
+
+static Project parseEditorProject(
+    const juce::String& editorText);
 
 // ==================================================
 // Constructor
@@ -14,15 +25,7 @@ MainComponent::MainComponent()
 {
     setSize(1000, 750);
 
-    // ==================================================
-    // Audio format support
-    // ==================================================
-
     formatManager.registerBasicFormats();
-
-    // ==================================================
-    // Title
-    // ==================================================
 
     titleLabel.setText(
         "AudioEditor",
@@ -38,10 +41,6 @@ MainComponent::MainComponent()
         juce::Colours::white);
 
     addAndMakeVisible(titleLabel);
-
-    // ==================================================
-    // Main buttons
-    // ==================================================
 
     openButton.setButtonText("Open File");
     playButton.setButtonText("Play");
@@ -150,23 +149,12 @@ MainComponent::MainComponent()
 
     const char* noteNames[] =
     {
-        "C",
-        "C#",
-        "D",
-        "D#",
-        "E",
-        "F",
-        "F#",
-        "G",
-        "G#",
-        "A",
-        "A#",
-        "B"
+        "C", "C#", "D", "D#", "E", "F",
+        "F#", "G", "G#", "A", "A#", "B"
     };
 
     int noteId = 1;
 
-    // Add notes from C2 through C6.
     for (int octave = 2;
          octave <= 6;
          ++octave)
@@ -195,9 +183,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(startBeatLabel);
     addAndMakeVisible(startBeatEditor);
 
-    startBeatEditor.setText(
-        "0",
-        false);
+    startBeatEditor.setText("0", false);
 
     startBeatEditor.setInputRestrictions(
         12,
@@ -217,9 +203,7 @@ MainComponent::MainComponent()
     addAndMakeVisible(durationLabel);
     addAndMakeVisible(durationEditor);
 
-    durationEditor.setText(
-        "1",
-        false);
+    durationEditor.setText("1", false);
 
     durationEditor.setInputRestrictions(
         12,
@@ -229,7 +213,7 @@ MainComponent::MainComponent()
         juce::Justification::centred);
 
     // ==================================================
-    // Tempo / tracks
+    // Info
     // ==================================================
 
     tempoLabel.setText(
@@ -251,15 +235,13 @@ MainComponent::MainComponent()
     projectInfo.setReadOnly(false);
     projectInfo.setScrollbarsShown(true);
     projectInfo.setReturnKeyStartsNewLine(true);
+
     projectInfo.setFont(
         juce::Font(16.0f));
 
     projectInfo.setColour(
         juce::TextEditor::backgroundColourId,
-        juce::Colour::fromRGB(
-            20,
-            20,
-            24));
+        juce::Colour::fromRGB(20, 20, 24));
 
     projectInfo.setColour(
         juce::TextEditor::textColourId,
@@ -267,10 +249,7 @@ MainComponent::MainComponent()
 
     projectInfo.setColour(
         juce::TextEditor::outlineColourId,
-        juce::Colour::fromRGB(
-            70,
-            70,
-            75));
+        juce::Colour::fromRGB(70, 70, 75));
 
     projectInfo.setText(
         "No project loaded.\n\n"
@@ -295,13 +274,7 @@ MainComponent::MainComponent()
 
     addAndMakeVisible(statusLabel);
 
-    // ==================================================
-    // Start audio
-    // ==================================================
-
-    setAudioChannels(
-        0,
-        2);
+    setAudioChannels(0, 2);
 }
 
 // ==================================================
@@ -494,53 +467,18 @@ void MainComponent::addInstrumentNote()
 
         switch (selectedInstrument)
         {
-            case 1:
-                instrumentCommand = "GUITAR";
-                break;
-
-            case 2:
-                instrumentCommand = "ELECTRICGUITAR";
-                break;
-
-            case 3:
-                instrumentCommand = "PIANO";
-                break;
-
-            case 4:
-                instrumentCommand = "ELECTRICPIANO";
-                break;
-
-            case 5:
-                instrumentCommand = "BASS";
-                break;
-
-            case 6:
-                instrumentCommand = "ORGAN";
-                break;
-
-            case 7:
-                instrumentCommand = "SYNTHLEAD";
-                break;
-
-            case 8:
-                instrumentCommand = "SYNTHPAD";
-                break;
-
-            case 9:
-                instrumentCommand = "STRINGS";
-                break;
-
-            case 10:
-                instrumentCommand = "FLUTE";
-                break;
-
-            case 11:
-                instrumentCommand = "BRASS";
-                break;
-
-            case 12:
-                instrumentCommand = "BELL";
-                break;
+            case 1:  instrumentCommand = "GUITAR"; break;
+            case 2:  instrumentCommand = "ELECTRICGUITAR"; break;
+            case 3:  instrumentCommand = "PIANO"; break;
+            case 4:  instrumentCommand = "ELECTRICPIANO"; break;
+            case 5:  instrumentCommand = "BASS"; break;
+            case 6:  instrumentCommand = "ORGAN"; break;
+            case 7:  instrumentCommand = "SYNTHLEAD"; break;
+            case 8:  instrumentCommand = "SYNTHPAD"; break;
+            case 9:  instrumentCommand = "STRINGS"; break;
+            case 10: instrumentCommand = "FLUTE"; break;
+            case 11: instrumentCommand = "BRASS"; break;
+            case 12: instrumentCommand = "BELL"; break;
 
             default:
                 throw std::runtime_error(
@@ -562,11 +500,25 @@ void MainComponent::addInstrumentNote()
         juce::String text =
             projectInfo.getText();
 
-        // Remove instructional placeholder.
-        if (text.contains(
-                "No project loaded."))
+        // --------------------------------------------------
+        // If editor is empty/placeholder, create a valid
+        // one-track project automatically.
+        // --------------------------------------------------
+
+        if (text.contains("No project loaded."))
         {
-            text.clear();
+            text =
+                "TEMPO 120\n"
+                "TRACK 1 INSTRUMENT\n"
+                "LENGTH 8\n\n";
+        }
+
+        if (text.trim().isEmpty())
+        {
+            text =
+                "TEMPO 120\n"
+                "TRACK 1 INSTRUMENT\n"
+                "LENGTH 8\n\n";
         }
 
         if (text.isNotEmpty() &&
@@ -580,7 +532,7 @@ void MainComponent::addInstrumentNote()
 
         projectInfo.setText(
             text,
-            true);
+            false);
 
         statusLabel.setText(
             "Added " +
@@ -629,65 +581,21 @@ void MainComponent::addDrumEvent()
 
         switch (selectedDrum)
         {
-            case 1:
-                drumCommand = "KICK";
-                break;
-
-            case 2:
-                drumCommand = "SNARE";
-                break;
-
-            case 3:
-                drumCommand = "HIHAT";
-                break;
-
-            case 4:
-                drumCommand = "OPENHIHAT";
-                break;
-
-            case 5:
-                drumCommand = "CLAP";
-                break;
-
-            case 6:
-                drumCommand = "RIMSHOT";
-                break;
-
-            case 7:
-                drumCommand = "TOM";
-                break;
-
-            case 8:
-                drumCommand = "LOWTOM";
-                break;
-
-            case 9:
-                drumCommand = "MIDTOM";
-                break;
-
-            case 10:
-                drumCommand = "HIGHTOM";
-                break;
-
-            case 11:
-                drumCommand = "CRASH";
-                break;
-
-            case 12:
-                drumCommand = "RIDE";
-                break;
-
-            case 13:
-                drumCommand = "COWBELL";
-                break;
-
-            case 14:
-                drumCommand = "TAMBOURINE";
-                break;
-
-            case 15:
-                drumCommand = "SHAKER";
-                break;
+            case 1:  drumCommand = "KICK"; break;
+            case 2:  drumCommand = "SNARE"; break;
+            case 3:  drumCommand = "HIHAT"; break;
+            case 4:  drumCommand = "OPENHIHAT"; break;
+            case 5:  drumCommand = "CLAP"; break;
+            case 6:  drumCommand = "RIMSHOT"; break;
+            case 7:  drumCommand = "TOM"; break;
+            case 8:  drumCommand = "LOWTOM"; break;
+            case 9:  drumCommand = "MIDTOM"; break;
+            case 10: drumCommand = "HIGHTOM"; break;
+            case 11: drumCommand = "CRASH"; break;
+            case 12: drumCommand = "RIDE"; break;
+            case 13: drumCommand = "COWBELL"; break;
+            case 14: drumCommand = "TAMBOURINE"; break;
+            case 15: drumCommand = "SHAKER"; break;
 
             default:
                 throw std::runtime_error(
@@ -703,10 +611,20 @@ void MainComponent::addDrumEvent()
         juce::String text =
             projectInfo.getText();
 
-        if (text.contains(
-                "No project loaded."))
+        if (text.contains("No project loaded."))
         {
-            text.clear();
+            text =
+                "TEMPO 120\n"
+                "TRACK 1 INSTRUMENT\n"
+                "LENGTH 8\n\n";
+        }
+
+        if (text.trim().isEmpty())
+        {
+            text =
+                "TEMPO 120\n"
+                "TRACK 1 INSTRUMENT\n"
+                "LENGTH 8\n\n";
         }
 
         if (text.isNotEmpty() &&
@@ -720,7 +638,7 @@ void MainComponent::addDrumEvent()
 
         projectInfo.setText(
             text,
-            true);
+            false);
 
         statusLabel.setText(
             "Added " +
@@ -835,6 +753,13 @@ void MainComponent::openProject()
                 return;
             }
 
+            // --------------------------------------------------
+            // Audio file.
+            //
+            // If a project/editor is already present, append
+            // the audio to the current track.
+            // --------------------------------------------------
+
             if (loadAudioFileForPlayback(result))
             {
                 fileChooser.reset();
@@ -859,66 +784,140 @@ bool MainComponent::loadAudioFileForPlayback(
     if (!audioFile.existsAsFile())
         return false;
 
-    auto reader =
-        std::unique_ptr<
-            juce::AudioFormatReader>(
-                formatManager.createReaderFor(
-                    audioFile));
+    // ==================================================
+    // If there is project text on screen, add audio to
+    // the existing track rather than replacing it.
+    // ==================================================
 
-    if (reader == nullptr)
+    const juce::String editorText =
+        projectInfo.getText();
+
+    const bool hasProjectText =
+        !editorText.trim().isEmpty() &&
+        !editorText.contains("No project loaded.");
+
+    if (hasProjectText)
+    {
+        try
+        {
+            Project project =
+                parseEditorProject(
+                    editorText);
+
+            if (project.tracks.empty())
+            {
+                throw std::runtime_error(
+                    "No TRACK exists in the project.");
+            }
+
+            // --------------------------------------------------
+            // Use the FIRST track as the shared track.
+            // --------------------------------------------------
+
+            const int trackNumber =
+                project.tracks.front().number;
+
+            juce::String text =
+                editorText;
+
+            if (text.isNotEmpty() &&
+                !text.endsWithChar('\n'))
+            {
+                text += "\n";
+            }
+
+            text +=
+                "AUDIO \"" +
+                audioFile.getFullPathName() +
+                "\" 0\n";
+
+            projectInfo.setText(
+                text,
+                false);
+
+            currentAudioFile =
+                audioFile;
+
+            tempoLabel.setText(
+                "Tempo: " +
+                juce::String(
+                    project.tempo,
+                    1) +
+                " BPM",
+                juce::dontSendNotification);
+
+            tracksLabel.setText(
+                "Tracks: " +
+                juce::String(
+                    static_cast<int>(
+                        project.tracks.size())),
+                juce::dontSendNotification);
+
+            statusLabel.setText(
+                "Added audio to Track " +
+                juce::String(trackNumber) +
+                ": " +
+                audioFile.getFileName(),
+                juce::dontSendNotification);
+
+            return true;
+        }
+        catch (const std::exception& e)
+        {
+            statusLabel.setText(
+                "Add audio error: " +
+                juce::String(e.what()),
+                juce::dontSendNotification);
+
+            return false;
+        }
+    }
+
+    // ==================================================
+    // No project yet.
+    //
+    // Create a project automatically so the audio is
+    // still represented using the new AUDIO syntax.
+    // ==================================================
+
+    try
+    {
+        juce::String text;
+
+        text =
+            "TEMPO 120\n"
+            "TRACK 1 INSTRUMENT\n"
+            "LENGTH 8\n\n"
+            "AUDIO \"" +
+            audioFile.getFullPathName() +
+            "\" 0\n";
+
+        projectInfo.setText(
+            text,
+            false);
+
+        currentProject = juce::File{};
+        currentAudioFile = audioFile;
+
+        tempoLabel.setText(
+            "Tempo: 120.0 BPM",
+            juce::dontSendNotification);
+
+        tracksLabel.setText(
+            "Tracks: 1",
+            juce::dontSendNotification);
+
+        statusLabel.setText(
+            "Audio added to Track 1: " +
+            audioFile.getFileName(),
+            juce::dontSendNotification);
+
+        return true;
+    }
+    catch (...)
+    {
         return false;
-
-    stopPlayback();
-
-    const double readerSampleRate =
-        reader->sampleRate;
-
-    const int numChannels =
-        static_cast<int>(
-            reader->numChannels);
-
-    readerSource =
-        std::make_unique<
-            juce::AudioFormatReaderSource>(
-                reader.release(),
-                true);
-
-    transportSource.setSource(
-        readerSource.get(),
-        0,
-        nullptr,
-        readerSampleRate);
-
-    transportSource.setPosition(0.0);
-
-    currentProject = juce::File{};
-    currentAudioFile = audioFile;
-
-    projectInfo.setText(
-        "Media file loaded:\n\n" +
-        audioFile.getFileName() +
-        "\n\nPath:\n" +
-        audioFile.getFullPathName(),
-        false);
-
-    tempoLabel.setText(
-        "Sample Rate: " +
-        juce::String(
-            readerSampleRate,
-            0) +
-        " Hz",
-        juce::dontSendNotification);
-
-    tracksLabel.setText(
-        "Channels: " +
-        juce::String(numChannels),
-        juce::dontSendNotification);
-
-    statusLabel.setText(
-        "Media loaded. Press Play.",
-        juce::dontSendNotification);
-
-    return true;
+    }
 }
 
 // ==================================================
@@ -1346,16 +1345,8 @@ void MainComponent::resized()
     auto area =
         getLocalBounds().reduced(25);
 
-    // ==================================================
-    // Title
-    // ==================================================
-
     titleLabel.setBounds(
         area.removeFromTop(45));
-
-    // ==================================================
-    // Main buttons
-    // ==================================================
 
     auto mainButtonArea =
         area.removeFromTop(50);
@@ -1374,10 +1365,6 @@ void MainComponent::resized()
         mainButtonArea
             .removeFromLeft(150)
             .reduced(5));
-
-    // ==================================================
-    // Instrument / drum controls
-    // ==================================================
 
     auto instrumentArea =
         area.removeFromTop(45);
@@ -1412,10 +1399,6 @@ void MainComponent::resized()
             .removeFromLeft(105)
             .reduced(3));
 
-    // ==================================================
-    // Note controls
-    // ==================================================
-
     auto noteArea =
         area.removeFromTop(40);
 
@@ -1449,10 +1432,6 @@ void MainComponent::resized()
             .removeFromLeft(80)
             .reduced(3));
 
-    // ==================================================
-    // Tempo / tracks
-    // ==================================================
-
     auto infoArea =
         area.removeFromTop(35);
 
@@ -1464,10 +1443,6 @@ void MainComponent::resized()
         infoArea
             .removeFromLeft(180));
 
-    // ==================================================
-    // Status
-    // ==================================================
-
     auto statusArea =
         getLocalBounds()
             .reduced(25)
@@ -1475,10 +1450,6 @@ void MainComponent::resized()
 
     statusLabel.setBounds(
         statusArea);
-
-    // ==================================================
-    // Project editor
-    // ==================================================
 
     projectInfo.setBounds(
         area.reduced(5));
