@@ -4,14 +4,20 @@
 #include <stdexcept>
 #include <cctype>
 
+// ==================================================
+// Parse .song project file
+// ==================================================
+
 Project Parser::parseFile(const std::string& filename)
 {
     std::ifstream file(filename);
 
     if (!file)
+    {
         throw std::runtime_error(
             "Could not open project: " + filename
         );
+    }
 
     Project project;
 
@@ -21,9 +27,9 @@ Project Parser::parseFile(const std::string& filename)
 
     while (std::getline(file, line))
     {
-        // ---------------------------------
+        // ------------------------------------------
         // Remove comments
-        // ---------------------------------
+        // ------------------------------------------
 
         const auto comment = line.find('#');
 
@@ -37,32 +43,36 @@ Project Parser::parseFile(const std::string& filename)
         if (!(ss >> command))
             continue;
 
-        // ---------------------------------
+        // ==================================================
         // TEMPO
-        // ---------------------------------
+        // ==================================================
 
         if (command == "TEMPO")
         {
             double tempo;
 
             if (!(ss >> tempo))
+            {
                 throw std::runtime_error(
                     "Invalid TEMPO value."
                 );
+            }
 
             if (tempo < 1.0 || tempo > 480.0)
+            {
                 throw std::runtime_error(
                     "Tempo must be between 1 and 480 BPM."
                 );
+            }
 
             project.tempo = tempo;
 
             continue;
         }
 
-        // ---------------------------------
+        // ==================================================
         // TRACK
-        // ---------------------------------
+        // ==================================================
 
         if (command == "TRACK")
         {
@@ -70,9 +80,11 @@ Project Parser::parseFile(const std::string& filename)
             std::string type;
 
             if (!(ss >> number >> type))
+            {
                 throw std::runtime_error(
                     "Invalid TRACK declaration."
                 );
+            }
 
             project.tracks.emplace_back();
 
@@ -82,11 +94,13 @@ Project Parser::parseFile(const std::string& filename)
 
             if (type == "INSTRUMENT")
             {
-                currentTrack->type = TrackType::Instrument;
+                currentTrack->type =
+                    TrackType::Instrument;
             }
             else if (type == "AUDIO")
             {
-                currentTrack->type = TrackType::Audio;
+                currentTrack->type =
+                    TrackType::Audio;
             }
             else
             {
@@ -98,65 +112,75 @@ Project Parser::parseFile(const std::string& filename)
             continue;
         }
 
-        // ---------------------------------
-        // Make sure a track exists
-        // ---------------------------------
+        // ==================================================
+        // Make sure a TRACK exists
+        // ==================================================
 
-        if (!currentTrack)
+        if (currentTrack == nullptr)
         {
             throw std::runtime_error(
                 "Found data before a TRACK declaration."
             );
         }
 
-        // ---------------------------------
+        // ==================================================
         // LENGTH
-        // ---------------------------------
+        // ==================================================
 
         if (command == "LENGTH")
         {
             if (!(ss >> currentTrack->lengthBeats))
+            {
                 throw std::runtime_error(
                     "Invalid LENGTH value."
                 );
+            }
 
-            if (currentTrack->lengthBeats < 0)
+            if (currentTrack->lengthBeats < 0.0)
+            {
                 throw std::runtime_error(
                     "Track length cannot be negative."
                 );
+            }
 
             continue;
         }
 
-                        // ---------------------------------
+        // ==================================================
         // VOLUME
-        // ---------------------------------
+        // ==================================================
 
         if (command == "VOLUME")
         {
             if (!(ss >> currentTrack->volume))
+            {
                 throw std::runtime_error(
                     "Invalid VOLUME value."
                 );
+            }
 
             if (currentTrack->volume < 0.0)
+            {
                 throw std::runtime_error(
                     "Track volume cannot be negative."
                 );
+            }
 
             continue;
         }
 
-        // ---------------------------------
+        // ==================================================
         // PAN
-        // ---------------------------------
+        // ==================================================
 
         if (command == "PAN")
         {
             if (!(ss >> currentTrack->pan))
+            {
                 throw std::runtime_error(
                     "Invalid PAN value."
                 );
+            }
 
             if (currentTrack->pan < -1.0 ||
                 currentTrack->pan > 1.0)
@@ -169,67 +193,78 @@ Project Parser::parseFile(const std::string& filename)
             continue;
         }
 
-
-        // ---------------------------------
+        // ==================================================
         // AUDIO FILE
-        // ---------------------------------
+        // ==================================================
 
         if (command == "FILE")
         {
-            std::string filename;
+            std::string audioFilename;
 
-            if (!(ss >> filename))
+            if (!(ss >> audioFilename))
+            {
                 throw std::runtime_error(
                     "Missing audio filename."
                 );
-
-            // Remove surrounding quotes if present.
-            if (filename.size() >= 2 &&
-                filename.front() == '"' &&
-                filename.back() == '"')
-            {
-                filename = filename.substr(
-                    1,
-                    filename.size() - 2
-                );
             }
 
-            currentTrack->audioFile = filename;
+            // Remove surrounding quotes.
+            if (audioFilename.size() >= 2 &&
+                audioFilename.front() == '"' &&
+                audioFilename.back() == '"')
+            {
+                audioFilename =
+                    audioFilename.substr(
+                        1,
+                        audioFilename.size() - 2
+                    );
+            }
+
+            currentTrack->audioFile =
+                audioFilename;
 
             continue;
         }
 
-        // ---------------------------------
+        // ==================================================
         // AUDIO START
-        // ---------------------------------
+        // ==================================================
 
         if (command == "START")
         {
             if (!(ss >> currentTrack->audioStartBeat))
+            {
                 throw std::runtime_error(
                     "Invalid START value."
                 );
+            }
 
-            if (currentTrack->audioStartBeat < 0)
+            if (currentTrack->audioStartBeat < 0.0)
+            {
                 throw std::runtime_error(
                     "Audio START cannot be negative."
                 );
+            }
 
             continue;
         }
 
-        // ---------------------------------
-        // INSTRUMENT TRACK
-        // ---------------------------------
+        // ==================================================
+        // INSTRUMENT TRACK DATA
+        // ==================================================
 
-        if (currentTrack->type == TrackType::Instrument)
+        if (currentTrack->type ==
+            TrackType::Instrument)
         {
-            // -----------------------------
+            // ==================================================
             // DRUM
+            //
+            // Example:
             //
             // DRUM KICK 0
             // DRUM SNARE 2
-            // -----------------------------
+            // DRUM CRASH 4
+            // ==================================================
 
             if (command == "DRUM")
             {
@@ -243,7 +278,7 @@ Project Parser::parseFile(const std::string& filename)
                     );
                 }
 
-                if (startBeat < 0)
+                if (startBeat < 0.0)
                 {
                     throw std::runtime_error(
                         "Drum start beat cannot be negative."
@@ -252,41 +287,52 @@ Project Parser::parseFile(const std::string& filename)
 
                 DrumEvent event;
 
-                event.drum = parseDrum(drumName);
-                event.startBeat = startBeat;
+                event.drum =
+                    parseDrum(drumName);
 
-                currentTrack->drums.push_back(event);
+                event.startBeat =
+                    startBeat;
+
+                currentTrack->drums.push_back(
+                    event
+                );
 
                 continue;
             }
 
-            // -----------------------------
+            // ==================================================
             // NOTE
             //
+            // Examples:
+            //
             // GUITAR C4 0 1
-            // GUITAR E4 0 1
-            // GUITAR G4 0 1
-            // -----------------------------
+            // PIANO E4 1 1
+            // BASS C2 2 2
+            // SYNTHLEAD G4 4 1
+            // ==================================================
 
             std::string noteName;
             double startBeat;
             double duration;
 
-            if (!(ss >> noteName >> startBeat >> duration))
+            if (!(ss >> noteName >>
+                  startBeat >>
+                  duration))
             {
                 throw std::runtime_error(
-                    "Invalid instrument event: " + command
+                    "Invalid instrument event: " +
+                    command
                 );
             }
 
-            if (startBeat < 0)
+            if (startBeat < 0.0)
             {
                 throw std::runtime_error(
                     "Note start beat cannot be negative."
                 );
             }
 
-            if (duration <= 0)
+            if (duration <= 0.0)
             {
                 throw std::runtime_error(
                     "Note duration must be greater than zero."
@@ -295,8 +341,6 @@ Project Parser::parseFile(const std::string& filename)
 
             NoteEvent event;
 
-            // command is the instrument name:
-            // GUITAR, PIANO, BASS, etc.
             event.instrument =
                 parseInstrument(command);
 
@@ -309,14 +353,16 @@ Project Parser::parseFile(const std::string& filename)
             event.durationBeats =
                 duration;
 
-            currentTrack->notes.push_back(event);
+            currentTrack->notes.push_back(
+                event
+            );
 
             continue;
         }
 
-        // ---------------------------------
+        // ==================================================
         // Unknown command
-        // ---------------------------------
+        // ==================================================
 
         throw std::runtime_error(
             "Unknown command: " + command
@@ -326,36 +372,60 @@ Project Parser::parseFile(const std::string& filename)
     return project;
 }
 
-
 // ==================================================
 // Convert musical note to MIDI
 // ==================================================
 
-int Parser::noteToMidi(const std::string& note)
+int Parser::noteToMidi(
+    const std::string& note)
 {
     if (note.size() < 2)
+    {
         throw std::runtime_error(
             "Invalid note: " + note
         );
+    }
 
     char letter =
         static_cast<char>(
             std::toupper(
-                static_cast<unsigned char>(note[0])
+                static_cast<unsigned char>(
+                    note[0]
+                )
             )
         );
 
-    int semitone;
+    int semitone = 0;
 
     switch (letter)
     {
-        case 'C': semitone = 0;  break;
-        case 'D': semitone = 2;  break;
-        case 'E': semitone = 4;  break;
-        case 'F': semitone = 5;  break;
-        case 'G': semitone = 7;  break;
-        case 'A': semitone = 9;  break;
-        case 'B': semitone = 11; break;
+        case 'C':
+            semitone = 0;
+            break;
+
+        case 'D':
+            semitone = 2;
+            break;
+
+        case 'E':
+            semitone = 4;
+            break;
+
+        case 'F':
+            semitone = 5;
+            break;
+
+        case 'G':
+            semitone = 7;
+            break;
+
+        case 'A':
+            semitone = 9;
+            break;
+
+        case 'B':
+            semitone = 11;
+            break;
 
         default:
             throw std::runtime_error(
@@ -363,9 +433,12 @@ int Parser::noteToMidi(const std::string& note)
             );
     }
 
-    size_t index = 1;
+    std::size_t index = 1;
 
+    // ------------------------------------------
     // Sharp
+    // ------------------------------------------
+
     if (index < note.size() &&
         note[index] == '#')
     {
@@ -373,7 +446,10 @@ int Parser::noteToMidi(const std::string& note)
         index++;
     }
 
+    // ------------------------------------------
     // Flat
+    // ------------------------------------------
+
     else if (index < note.size() &&
              note[index] == 'b')
     {
@@ -393,7 +469,9 @@ int Parser::noteToMidi(const std::string& note)
     try
     {
         octave =
-            std::stoi(note.substr(index));
+            std::stoi(
+                note.substr(index)
+            );
     }
     catch (...)
     {
@@ -409,12 +487,12 @@ int Parser::noteToMidi(const std::string& note)
         );
     }
 
-    return (octave + 1) * 12 + semitone;
+    return (octave + 1) * 12 +
+           semitone;
 }
 
-
 // ==================================================
-// Instrument
+// Parse instrument
 // ==================================================
 
 InstrumentType Parser::parseInstrument(
@@ -423,20 +501,46 @@ InstrumentType Parser::parseInstrument(
     if (name == "GUITAR")
         return InstrumentType::Guitar;
 
+    if (name == "ELECTRICGUITAR")
+        return InstrumentType::ElectricGuitar;
+
     if (name == "PIANO")
         return InstrumentType::Piano;
 
+    if (name == "ELECTRICPIANO")
+        return InstrumentType::ElectricPiano;
+
     if (name == "BASS")
         return InstrumentType::Bass;
+
+    if (name == "ORGAN")
+        return InstrumentType::Organ;
+
+    if (name == "SYNTHLEAD")
+        return InstrumentType::SynthLead;
+
+    if (name == "SYNTHPAD")
+        return InstrumentType::SynthPad;
+
+    if (name == "STRINGS")
+        return InstrumentType::Strings;
+
+    if (name == "FLUTE")
+        return InstrumentType::Flute;
+
+    if (name == "BRASS")
+        return InstrumentType::Brass;
+
+    if (name == "BELL")
+        return InstrumentType::Bell;
 
     throw std::runtime_error(
         "Unknown instrument: " + name
     );
 }
 
-
 // ==================================================
-// Drums
+// Parse drums
 // ==================================================
 
 DrumType Parser::parseDrum(
@@ -451,8 +555,41 @@ DrumType Parser::parseDrum(
     if (name == "HIHAT")
         return DrumType::HiHat;
 
+    if (name == "OPENHIHAT")
+        return DrumType::OpenHiHat;
+
+    if (name == "CLAP")
+        return DrumType::Clap;
+
+    if (name == "RIMSHOT")
+        return DrumType::Rimshot;
+
+    if (name == "TOM")
+        return DrumType::Tom;
+
+    if (name == "LOWTOM")
+        return DrumType::LowTom;
+
+    if (name == "MIDTOM")
+        return DrumType::MidTom;
+
+    if (name == "HIGHTOM")
+        return DrumType::HighTom;
+
     if (name == "CRASH")
         return DrumType::Crash;
+
+    if (name == "RIDE")
+        return DrumType::Ride;
+
+    if (name == "COWBELL")
+        return DrumType::Cowbell;
+
+    if (name == "TAMBOURINE")
+        return DrumType::Tambourine;
+
+    if (name == "SHAKER")
+        return DrumType::Shaker;
 
     throw std::runtime_error(
         "Unknown drum: " + name

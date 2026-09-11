@@ -1,10 +1,18 @@
 #include <JuceHeader.h>
 #include "MainComponent.h"
 
+// ==================================================
+// AudioEditor Application
+// ==================================================
+
 class AudioEditorApplication : public juce::JUCEApplication
 {
 public:
     AudioEditorApplication() = default;
+
+    // ==================================================
+    // Application information
+    // ==================================================
 
     const juce::String getApplicationName() override
     {
@@ -21,6 +29,10 @@ public:
         return true;
     }
 
+    // ==================================================
+    // Start application
+    // ==================================================
+
     void initialise(const juce::String&) override
     {
         mainWindow =
@@ -28,10 +40,18 @@ public:
                 getApplicationName());
     }
 
+    // ==================================================
+    // Shutdown
+    // ==================================================
+
     void shutdown() override
     {
         mainWindow.reset();
     }
+
+    // ==================================================
+    // Quit
+    // ==================================================
 
     void systemRequestedQuit() override
     {
@@ -44,11 +64,18 @@ public:
     }
 
 private:
-    class MainWindow : public juce::DocumentWindow
+
+    // ==================================================
+    // Main window
+    // ==================================================
+
+    class MainWindow
+        : public juce::DocumentWindow
     {
     public:
-        MainWindow(juce::String name)
-            : DocumentWindow(
+
+        MainWindow(const juce::String& name)
+            : juce::DocumentWindow(
                   name,
                   juce::Colours::darkgrey,
                   juce::DocumentWindow::allButtons)
@@ -59,12 +86,18 @@ private:
                 new MainComponent(),
                 true);
 
-            centreWithSize(900, 600);
+            centreWithSize(
+                1000,
+                750);
 
-            setResizable(true, true);
+            setResizable(
+                true,
+                true);
 
             setVisible(true);
         }
+
+        ~MainWindow() override = default;
 
         void closeButtonPressed() override
         {
@@ -73,10 +106,18 @@ private:
         }
     };
 
+    // ==================================================
+    // Application window
+    // ==================================================
+
     std::unique_ptr<MainWindow> mainWindow;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(
         AudioEditorApplication)
 };
+
+// ==================================================
+// Launch application
+// ==================================================
 
 START_JUCE_APPLICATION(AudioEditorApplication)

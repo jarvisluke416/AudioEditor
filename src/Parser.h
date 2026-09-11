@@ -1,15 +1,43 @@
 #pragma once
 
-#include "Project.h"
 #include <string>
+#include "Project.h"
+
+// ==================================================
+// Parser
+// ==================================================
 
 class Parser
 {
 public:
-    static Project parseFile(const std::string& filename);
+
+    // ----------------------------------------------
+    // Parse .song file
+    // ----------------------------------------------
+
+    static Project parseFile(
+        const std::string& filename);
 
 private:
-    static int noteToMidi(const std::string& note);
-    static InstrumentType parseInstrument(const std::string& name);
-    static DrumType parseDrum(const std::string& name);
+
+    // ----------------------------------------------
+    // Musical note conversion
+    // ----------------------------------------------
+
+    static int noteToMidi(
+        const std::string& note);
+
+    // ----------------------------------------------
+    // Instrument conversion
+    // ----------------------------------------------
+
+    static InstrumentType parseInstrument(
+        const std::string& name);
+
+    // ----------------------------------------------
+    // Drum conversion
+    // ----------------------------------------------
+
+    static DrumType parseDrum(
+        const std::string& name);
 };

@@ -1,4 +1,5 @@
 #pragma once
+
 #include <string>
 #include <vector>
 
@@ -9,8 +10,17 @@
 enum class InstrumentType
 {
     Guitar,
+    ElectricGuitar,
     Piano,
-    Bass
+    ElectricPiano,
+    Bass,
+    Organ,
+    SynthLead,
+    SynthPad,
+    Strings,
+    Flute,
+    Brass,
+    Bell
 };
 
 // ==================================================
@@ -22,7 +32,18 @@ enum class DrumType
     Kick,
     Snare,
     HiHat,
-    Crash
+    OpenHiHat,
+    Clap,
+    Rimshot,
+    Tom,
+    LowTom,
+    MidTom,
+    HighTom,
+    Crash,
+    Ride,
+    Cowbell,
+    Tambourine,
+    Shaker
 };
 
 // ==================================================
@@ -41,7 +62,8 @@ enum class TrackType
 
 struct NoteEvent
 {
-    InstrumentType instrument;
+    InstrumentType instrument =
+        InstrumentType::Guitar;
 
     int midiNote = 60;
 
@@ -56,7 +78,8 @@ struct NoteEvent
 
 struct DrumEvent
 {
-    DrumType drum;
+    DrumType drum =
+        DrumType::Kick;
 
     double startBeat = 0.0;
 };
@@ -69,21 +92,19 @@ struct Track
 {
     int number = 0;
 
-    TrackType type = TrackType::Instrument;
+    TrackType type =
+        TrackType::Instrument;
 
     double lengthBeats = 0.0;
 
-    // Mixer controls
     double volume = 1.0;
+
     double pan = 0.0;
 
-
-    // Instrument events
     std::vector<NoteEvent> notes;
 
     std::vector<DrumEvent> drums;
 
-    // Audio track
     std::string audioFile;
 
     double audioStartBeat = 0.0;
@@ -95,8 +116,6 @@ struct Track
 
 struct Project
 {
-    // Initial project tempo.
-    // Valid range: 1–480 BPM.
     double tempo = 120.0;
 
     std::vector<Track> tracks;

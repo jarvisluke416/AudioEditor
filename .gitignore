@@ -1,4 +1,24 @@
+# CMake
 build/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+
+# Visual Studio
 .vs/
 *.user
 *.suo
+*.VC.db
+*.VC.VC.opendb
+
+# Compiled output
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+
+# OS
+Thumbs.db
+.DS_Store

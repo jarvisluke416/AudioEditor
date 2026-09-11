@@ -1,102 +1,184 @@
 #pragma once
 #include <JuceHeader.h>
-#include "Parser.h"
+#include "Project.h"
 
 // ==================================================
-// Main AudioEditor window
+// MainComponent
 // ==================================================
 
-class MainComponent : public juce::AudioAppComponent
+class MainComponent
+    : public juce::AudioAppComponent
 {
 public:
-MainComponent();
-~MainComponent() override;
 
-void paint(juce::Graphics&) override;
-void resized() override;
+    MainComponent();
 
-// ==================================================
-// AudioAppComponent
-// ==================================================
+    ~MainComponent() override;
 
-void prepareToPlay(
-    int samplesPerBlockExpected,
-    double sampleRate) override;
+    // ----------------------------------------------
+    // Audio
+    // ----------------------------------------------
 
-void getNextAudioBlock(
-    const juce::AudioSourceChannelInfo& bufferToFill) override;
+    void prepareToPlay(
+        int samplesPerBlockExpected,
+        double sampleRate) override;
 
-void releaseResources() override;
+    void getNextAudioBlock(
+        const juce::AudioSourceChannelInfo& bufferToFill) override;
 
+    void releaseResources() override;
+
+    // ----------------------------------------------
+    // GUI
+    // ----------------------------------------------
+
+    void paint(
+        juce::Graphics& g) override;
+
+    void resized() override;
 
 private:
 
-// ==================================================
-// File handling
-// ==================================================
+    // ==================================================
+    // File / project functions
+    // ==================================================
 
-void openProject();
-void playProject();
-void renderProject();
+    void openProject();
 
-bool saveEditorToProject();
+    bool loadAudioFileForPlayback(
+        const juce::File& audioFile);
 
-// Opened .song project
-juce::File currentProject;
+    bool saveEditorToProject();
 
-// Opened WAV / MP3 / MP4
-juce::File currentAudioFile;
+    bool isProjectLoaded() const;
 
-// ==================================================
-// File chooser
-// ==================================================
+    bool isAudioFileLoaded() const;
 
-std::unique_ptr<juce::FileChooser> fileChooser;
+    // ==================================================
+    // Playback / rendering
+    // ==================================================
 
-// ==================================================
-// UI
-// ==================================================
+    void playProject();
 
-juce::TextButton openButton { "Open File" };
-juce::TextButton playButton { "Play" };
-juce::TextButton renderButton { "Render WAV" };
+    void renderProject();
 
-juce::Label titleLabel;
-juce::Label tempoLabel;
-juce::Label tracksLabel;
+    void stopPlayback();
 
-juce::TextEditor projectInfo;
+    // ==================================================
+    // Instrument / drum editor
+    // ==================================================
 
-juce::Label statusLabel;
+    void addInstrumentNote();
 
-// ==================================================
-// Audio playback
-// ==================================================
+    void addDrumEvent();
 
-juce::AudioFormatManager formatManager;
+    // ==================================================
+    // Names
+    //
+    // These MUST use the enum types from Project.h.
+    // ==================================================
 
-juce::AudioTransportSource transportSource;
+    juce::String instrumentName(
+        InstrumentType instrument) const;
 
-std::unique_ptr<juce::AudioFormatReaderSource>
-    readerSource;
+    juce::String drumName(
+        DrumType drum) const;
 
-// ==================================================
-// Helpers
-// ==================================================
+    // ==================================================
+    // Audio
+    // ==================================================
 
-bool isProjectLoaded() const;
-bool isAudioFileLoaded() const;
+    juce::AudioFormatManager formatManager;
 
-bool loadAudioFileForPlayback(
-    const juce::File& audioFile);
+    juce::AudioTransportSource transportSource;
 
-void stopPlayback();
+    std::unique_ptr<juce::AudioFormatReaderSource>
+        readerSource;
 
-// ==================================================
-// JUCE
-// ==================================================
+    // ==================================================
+    // Files
+    // ==================================================
 
-JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(MainComponent)
+    juce::File currentProject;
 
+    juce::File currentAudioFile;
 
+    std::unique_ptr<juce::FileChooser>
+        fileChooser;
+
+    // ==================================================
+    // Title
+    // ==================================================
+
+    juce::Label titleLabel;
+
+    // ==================================================
+    // Main buttons
+    // ==================================================
+
+    juce::TextButton openButton;
+
+    juce::TextButton playButton;
+
+    juce::TextButton renderButton;
+
+    // ==================================================
+    // Instrument controls
+    // ==================================================
+
+    juce::Label instrumentLabel;
+
+    juce::ComboBox instrumentBox;
+
+    juce::TextButton addNoteButton;
+
+    // ==================================================
+    // Drum controls
+    // ==================================================
+
+    juce::Label drumLabel;
+
+    juce::ComboBox drumBox;
+
+    juce::TextButton addDrumButton;
+
+    // ==================================================
+    // Note controls
+    // ==================================================
+
+    juce::Label noteLabel;
+
+    juce::ComboBox noteBox;
+
+    juce::Label startBeatLabel;
+
+    juce::TextEditor startBeatEditor;
+
+    juce::Label durationLabel;
+
+    juce::TextEditor durationEditor;
+
+    // ==================================================
+    // Project information
+    // ==================================================
+
+    juce::Label tempoLabel;
+
+    juce::Label tracksLabel;
+
+    juce::TextEditor projectInfo;
+
+    // ==================================================
+    // Status
+    // ==================================================
+
+    juce::Label statusLabel;
+
+    // ==================================================
+    // Prevent copying
+    // ==================================================
+
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(
+        MainComponent
+    )
 };

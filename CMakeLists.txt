@@ -47,6 +47,9 @@ target_sources(AudioEditor
 
         src/ProjectRenderer.cpp
         src/ProjectRenderer.h
+
+        src/TimelineComponent.cpp
+        src/TimelineComponent.h
 )
 
 target_include_directories(AudioEditor
