@@ -7,6 +7,9 @@ on:
     tags:
       - "v*"
 
+permissions:
+  contents: write
+
 jobs:
   build-windows:
     name: Build Windows Release
@@ -25,7 +28,7 @@ jobs:
           fetch-depth: 0
 
       # ==================================================
-      # Verify JUCE submodule
+      # Verify JUCE
       # ==================================================
 
       - name: Verify JUCE
@@ -129,8 +132,7 @@ jobs:
             -Force
 
           Write-Host ""
-          Write-Host "Created:"
-          Write-Host "AudioEditor-Windows.zip"
+          Write-Host "Created AudioEditor-Windows.zip"
 
       # ==================================================
       # Upload artifact
@@ -152,4 +154,3 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: AudioEditor-Windows.zip
-          generate_release_notes: true
