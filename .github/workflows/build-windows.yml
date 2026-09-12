@@ -1,0 +1,85 @@
+name: Build AudioEditor for Windows
+
+on:
+  workflow_dispatch:
+
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-windows:
+    name: Build Windows Release
+    runs-on: windows-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure CMake
+        run: >
+          cmake
+          -S .
+          -B build
+          -G "Visual Studio 17 2022"
+          -A x64
+
+      - name: Build AudioEditor
+        run: >
+          cmake
+          --build build
+          --config Release
+          --parallel
+
+      - name: Find AudioEditor executable
+        shell: powershell
+        run: |
+          Write-Host "Searching for AudioEditor.exe..."
+
+          $exe = Get-ChildItem `
+            -Path "build" `
+            -Filter "AudioEditor.exe" `
+            -Recurse `
+            -ErrorAction SilentlyContinue |
+            Select-Object -First 1
+
+          if ($null -eq $exe) {
+              Write-Error "AudioEditor.exe was not found."
+              exit 1
+          }
+
+          Write-Host "Found:"
+          Write-Host $exe.FullName
+
+          New-Item `
+            -ItemType Directory `
+            -Force `
+            -Path "package" | Out-Null
+
+          Copy-Item `
+            $exe.FullName `
+            "package\AudioEditor.exe"
+
+      - name: Create ZIP
+        shell: powershell
+        run: |
+          Compress-Archive `
+            -Path "package\AudioEditor.exe" `
+            -DestinationPath "AudioEditor-Windows.zip" `
+            -Force
+
+      - name: Upload Windows build
+        uses: actions/upload-artifact@v4
+        with:
+          name: AudioEditor-Windows
+          path: AudioEditor-Windows.zip
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: AudioEditor-Windows.zip
+          generate_release_notes: true

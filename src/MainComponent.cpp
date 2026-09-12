@@ -25,7 +25,15 @@ MainComponent::MainComponent()
 {
     setSize(1000, 750);
 
+    // ==================================================
+    // Audio
+    // ==================================================
+
     formatManager.registerBasicFormats();
+
+    // ==================================================
+    // Title
+    // ==================================================
 
     titleLabel.setText(
         "AudioEditor",
@@ -41,6 +49,10 @@ MainComponent::MainComponent()
         juce::Colours::white);
 
     addAndMakeVisible(titleLabel);
+
+    // ==================================================
+    // Main buttons
+    // ==================================================
 
     openButton.setButtonText("Open File");
     playButton.setButtonText("Play");
@@ -94,6 +106,9 @@ MainComponent::MainComponent()
         1,
         juce::dontSendNotification);
 
+    addNoteButton.setButtonText(
+        "Add Instrument");
+
     addNoteButton.onClick = [this]
     {
         addInstrumentNote();
@@ -131,6 +146,9 @@ MainComponent::MainComponent()
         1,
         juce::dontSendNotification);
 
+    addDrumButton.setButtonText(
+        "Add Drum");
+
     addDrumButton.onClick = [this]
     {
         addDrumEvent();
@@ -149,8 +167,18 @@ MainComponent::MainComponent()
 
     const char* noteNames[] =
     {
-        "C", "C#", "D", "D#", "E", "F",
-        "F#", "G", "G#", "A", "A#", "B"
+        "C",
+        "C#",
+        "D",
+        "D#",
+        "E",
+        "F",
+        "F#",
+        "G",
+        "G#",
+        "A",
+        "A#",
+        "B"
     };
 
     int noteId = 1;
@@ -171,46 +199,6 @@ MainComponent::MainComponent()
     noteBox.setSelectedId(
         25,
         juce::dontSendNotification);
-
-    // ==================================================
-    // Start beat
-    // ==================================================
-
-    startBeatLabel.setText(
-        "Start:",
-        juce::dontSendNotification);
-
-    addAndMakeVisible(startBeatLabel);
-    addAndMakeVisible(startBeatEditor);
-
-    startBeatEditor.setText("0", false);
-
-    startBeatEditor.setInputRestrictions(
-        12,
-        "0123456789.");
-
-    startBeatEditor.setJustification(
-        juce::Justification::centred);
-
-    // ==================================================
-    // Duration
-    // ==================================================
-
-    durationLabel.setText(
-        "Duration:",
-        juce::dontSendNotification);
-
-    addAndMakeVisible(durationLabel);
-    addAndMakeVisible(durationEditor);
-
-    durationEditor.setText("1", false);
-
-    durationEditor.setInputRestrictions(
-        12,
-        "0123456789.");
-
-    durationEditor.setJustification(
-        juce::Justification::centred);
 
     // ==================================================
     // Info
@@ -241,7 +229,10 @@ MainComponent::MainComponent()
 
     projectInfo.setColour(
         juce::TextEditor::backgroundColourId,
-        juce::Colour::fromRGB(20, 20, 24));
+        juce::Colour::fromRGB(
+            20,
+            20,
+            24));
 
     projectInfo.setColour(
         juce::TextEditor::textColourId,
@@ -249,7 +240,10 @@ MainComponent::MainComponent()
 
     projectInfo.setColour(
         juce::TextEditor::outlineColourId,
-        juce::Colour::fromRGB(70, 70, 75));
+        juce::Colour::fromRGB(
+            70,
+            70,
+            75));
 
     projectInfo.setText(
         "No project loaded.\n\n"
@@ -274,7 +268,13 @@ MainComponent::MainComponent()
 
     addAndMakeVisible(statusLabel);
 
-    setAudioChannels(0, 2);
+    // ==================================================
+    // Start audio
+    // ==================================================
+
+    setAudioChannels(
+        0,
+        2);
 }
 
 // ==================================================
@@ -438,47 +438,68 @@ void MainComponent::addInstrumentNote()
             noteBox.getSelectedId();
 
         if (selectedInstrument <= 0)
+        {
             throw std::runtime_error(
                 "Select an instrument.");
+        }
 
         if (selectedNote <= 0)
+        {
             throw std::runtime_error(
                 "Select a note.");
-
-        const double startBeat =
-            startBeatEditor
-                .getText()
-                .getDoubleValue();
-
-        const double duration =
-            durationEditor
-                .getText()
-                .getDoubleValue();
-
-        if (startBeat < 0.0)
-            throw std::runtime_error(
-                "Start beat cannot be negative.");
-
-        if (duration <= 0.0)
-            throw std::runtime_error(
-                "Duration must be greater than zero.");
+        }
 
         juce::String instrumentCommand;
 
         switch (selectedInstrument)
         {
-            case 1:  instrumentCommand = "GUITAR"; break;
-            case 2:  instrumentCommand = "ELECTRICGUITAR"; break;
-            case 3:  instrumentCommand = "PIANO"; break;
-            case 4:  instrumentCommand = "ELECTRICPIANO"; break;
-            case 5:  instrumentCommand = "BASS"; break;
-            case 6:  instrumentCommand = "ORGAN"; break;
-            case 7:  instrumentCommand = "SYNTHLEAD"; break;
-            case 8:  instrumentCommand = "SYNTHPAD"; break;
-            case 9:  instrumentCommand = "STRINGS"; break;
-            case 10: instrumentCommand = "FLUTE"; break;
-            case 11: instrumentCommand = "BRASS"; break;
-            case 12: instrumentCommand = "BELL"; break;
+            case 1:
+                instrumentCommand = "GUITAR";
+                break;
+
+            case 2:
+                instrumentCommand = "ELECTRICGUITAR";
+                break;
+
+            case 3:
+                instrumentCommand = "PIANO";
+                break;
+
+            case 4:
+                instrumentCommand = "ELECTRICPIANO";
+                break;
+
+            case 5:
+                instrumentCommand = "BASS";
+                break;
+
+            case 6:
+                instrumentCommand = "ORGAN";
+                break;
+
+            case 7:
+                instrumentCommand = "SYNTHLEAD";
+                break;
+
+            case 8:
+                instrumentCommand = "SYNTHPAD";
+                break;
+
+            case 9:
+                instrumentCommand = "STRINGS";
+                break;
+
+            case 10:
+                instrumentCommand = "FLUTE";
+                break;
+
+            case 11:
+                instrumentCommand = "BRASS";
+                break;
+
+            case 12:
+                instrumentCommand = "BELL";
+                break;
 
             default:
                 throw std::runtime_error(
@@ -492,20 +513,13 @@ void MainComponent::addInstrumentNote()
             instrumentCommand +
             " " +
             note +
-            " " +
-            juce::String(startBeat) +
-            " " +
-            juce::String(duration);
+            " 0 1";
 
         juce::String text =
             projectInfo.getText();
 
-        // --------------------------------------------------
-        // If editor is empty/placeholder, create a valid
-        // one-track project automatically.
-        // --------------------------------------------------
-
-        if (text.contains("No project loaded."))
+        if (text.contains(
+                "No project loaded."))
         {
             text =
                 "TEMPO 120\n"
@@ -541,7 +555,7 @@ void MainComponent::addInstrumentNote()
                     selectedInstrument - 1)) +
             " " +
             note +
-            ".",
+            " at beat 0.",
             juce::dontSendNotification);
     }
     catch (const std::exception& e)
@@ -565,37 +579,74 @@ void MainComponent::addDrumEvent()
             drumBox.getSelectedId();
 
         if (selectedDrum <= 0)
+        {
             throw std::runtime_error(
                 "Select a drum.");
-
-        const double startBeat =
-            startBeatEditor
-                .getText()
-                .getDoubleValue();
-
-        if (startBeat < 0.0)
-            throw std::runtime_error(
-                "Start beat cannot be negative.");
+        }
 
         juce::String drumCommand;
 
         switch (selectedDrum)
         {
-            case 1:  drumCommand = "KICK"; break;
-            case 2:  drumCommand = "SNARE"; break;
-            case 3:  drumCommand = "HIHAT"; break;
-            case 4:  drumCommand = "OPENHIHAT"; break;
-            case 5:  drumCommand = "CLAP"; break;
-            case 6:  drumCommand = "RIMSHOT"; break;
-            case 7:  drumCommand = "TOM"; break;
-            case 8:  drumCommand = "LOWTOM"; break;
-            case 9:  drumCommand = "MIDTOM"; break;
-            case 10: drumCommand = "HIGHTOM"; break;
-            case 11: drumCommand = "CRASH"; break;
-            case 12: drumCommand = "RIDE"; break;
-            case 13: drumCommand = "COWBELL"; break;
-            case 14: drumCommand = "TAMBOURINE"; break;
-            case 15: drumCommand = "SHAKER"; break;
+            case 1:
+                drumCommand = "KICK";
+                break;
+
+            case 2:
+                drumCommand = "SNARE";
+                break;
+
+            case 3:
+                drumCommand = "HIHAT";
+                break;
+
+            case 4:
+                drumCommand = "OPENHIHAT";
+                break;
+
+            case 5:
+                drumCommand = "CLAP";
+                break;
+
+            case 6:
+                drumCommand = "RIMSHOT";
+                break;
+
+            case 7:
+                drumCommand = "TOM";
+                break;
+
+            case 8:
+                drumCommand = "LOWTOM";
+                break;
+
+            case 9:
+                drumCommand = "MIDTOM";
+                break;
+
+            case 10:
+                drumCommand = "HIGHTOM";
+                break;
+
+            case 11:
+                drumCommand = "CRASH";
+                break;
+
+            case 12:
+                drumCommand = "RIDE";
+                break;
+
+            case 13:
+                drumCommand = "COWBELL";
+                break;
+
+            case 14:
+                drumCommand = "TAMBOURINE";
+                break;
+
+            case 15:
+                drumCommand = "SHAKER";
+                break;
 
             default:
                 throw std::runtime_error(
@@ -605,13 +656,13 @@ void MainComponent::addDrumEvent()
         const juce::String event =
             "DRUM " +
             drumCommand +
-            " " +
-            juce::String(startBeat, 3);
+            " 0";
 
         juce::String text =
             projectInfo.getText();
 
-        if (text.contains("No project loaded."))
+        if (text.contains(
+                "No project loaded."))
         {
             text =
                 "TEMPO 120\n"
@@ -645,7 +696,7 @@ void MainComponent::addDrumEvent()
             drumName(
                 static_cast<DrumType>(
                     selectedDrum - 1)) +
-            ".",
+            " at beat 0.",
             juce::dontSendNotification);
     }
     catch (const std::exception& e)
@@ -753,13 +804,6 @@ void MainComponent::openProject()
                 return;
             }
 
-            // --------------------------------------------------
-            // Audio file.
-            //
-            // If a project/editor is already present, append
-            // the audio to the current track.
-            // --------------------------------------------------
-
             if (loadAudioFileForPlayback(result))
             {
                 fileChooser.reset();
@@ -784,17 +828,13 @@ bool MainComponent::loadAudioFileForPlayback(
     if (!audioFile.existsAsFile())
         return false;
 
-    // ==================================================
-    // If there is project text on screen, add audio to
-    // the existing track rather than replacing it.
-    // ==================================================
-
     const juce::String editorText =
         projectInfo.getText();
 
     const bool hasProjectText =
         !editorText.trim().isEmpty() &&
-        !editorText.contains("No project loaded.");
+        !editorText.contains(
+            "No project loaded.");
 
     if (hasProjectText)
     {
@@ -809,10 +849,6 @@ bool MainComponent::loadAudioFileForPlayback(
                 throw std::runtime_error(
                     "No TRACK exists in the project.");
             }
-
-            // --------------------------------------------------
-            // Use the FIRST track as the shared track.
-            // --------------------------------------------------
 
             const int trackNumber =
                 project.tracks.front().number;
@@ -873,18 +909,9 @@ bool MainComponent::loadAudioFileForPlayback(
         }
     }
 
-    // ==================================================
-    // No project yet.
-    //
-    // Create a project automatically so the audio is
-    // still represented using the new AUDIO syntax.
-    // ==================================================
-
     try
     {
-        juce::String text;
-
-        text =
+        juce::String text =
             "TEMPO 120\n"
             "TRACK 1 INSTRUMENT\n"
             "LENGTH 8\n\n"
@@ -1167,7 +1194,7 @@ void MainComponent::playProject()
     }
 }
 
-// ==================================================
+        // ==================================================
 // Render project
 // ==================================================
 
@@ -1176,6 +1203,10 @@ void MainComponent::renderProject()
     try
     {
         Project project;
+
+        // ==================================================
+        // Load project
+        // ==================================================
 
         if (isProjectLoaded())
         {
@@ -1201,11 +1232,19 @@ void MainComponent::renderProject()
                     projectInfo.getText());
         }
 
+        // ==================================================
+        // Validate project
+        // ==================================================
+
         if (project.tracks.empty())
         {
             throw std::runtime_error(
                 "No track data loaded. Add at least one TRACK declaration.");
         }
+
+        // ==================================================
+        // Update interface
+        // ==================================================
 
         statusLabel.setText(
             "Rendering project...",
@@ -1226,6 +1265,10 @@ void MainComponent::renderProject()
                     project.tracks.size())),
             juce::dontSendNotification);
 
+        // ==================================================
+        // Render audio
+        // ==================================================
+
         constexpr int sampleRate = 48000;
 
         EditorAudioBuffer rendered =
@@ -1233,39 +1276,88 @@ void MainComponent::renderProject()
                 project,
                 sampleRate);
 
-        juce::File outputDirectory;
+        // ==================================================
+        // Ask user where to save the WAV
+        // ==================================================
 
-        if (isProjectLoaded())
-        {
-            outputDirectory =
-                currentProject
-                    .getParentDirectory();
-        }
-        else
-        {
-            outputDirectory =
-                juce::File::getSpecialLocation(
-                    juce::File::tempDirectory);
-        }
+        fileChooser =
+            std::make_unique<juce::FileChooser>(
+                "Save Rendered WAV",
+                juce::File{},
+                "*.wav");
 
-        const juce::File outputFile =
-            outputDirectory.getChildFile(
-                "render.wav");
+        fileChooser->launchAsync(
+            juce::FileBrowserComponent::saveMode |
+            juce::FileBrowserComponent::canSelectFiles |
+            juce::FileBrowserComponent::warnAboutOverwriting,
+            [this, rendered = std::move(rendered)]
+            (const juce::FileChooser& chooser) mutable
+            {
+                // ==================================================
+                // Get selected output file
+                // ==================================================
 
-        if (!WavWriter::write(
-                outputFile
-                    .getFullPathName()
-                    .toStdString(),
-                rendered))
-        {
-            throw std::runtime_error(
-                "Failed to write render.wav.");
-        }
+                juce::File outputFile =
+                    chooser.getResult();
 
-        statusLabel.setText(
-            "Render complete: " +
-            outputFile.getFullPathName(),
-            juce::dontSendNotification);
+                // ==================================================
+                // User cancelled
+                // ==================================================
+
+                if (outputFile == juce::File{})
+                {
+                    statusLabel.setText(
+                        "Render cancelled.",
+                        juce::dontSendNotification);
+
+                    fileChooser.reset();
+                    return;
+                }
+
+                // ==================================================
+                // Make sure the filename ends in .wav
+                // ==================================================
+
+                if (outputFile.getFileExtension()
+                        .isEmpty())
+                {
+                    outputFile =
+                        outputFile.withFileExtension(
+                            ".wav");
+                }
+
+                // ==================================================
+                // Write WAV
+                // ==================================================
+
+                const bool success =
+                    WavWriter::write(
+                        outputFile
+                            .getFullPathName()
+                            .toStdString(),
+                        rendered);
+
+                if (!success)
+                {
+                    statusLabel.setText(
+                        "Failed to save WAV file.",
+                        juce::dontSendNotification);
+
+                    fileChooser.reset();
+                    return;
+                }
+
+                // ==================================================
+                // Success
+                // ==================================================
+
+                statusLabel.setText(
+                    "WAV saved: " +
+                    outputFile.getFullPathName(),
+                    juce::dontSendNotification);
+
+                fileChooser.reset();
+            });
     }
     catch (const std::exception& e)
     {
@@ -1281,7 +1373,6 @@ void MainComponent::renderProject()
             juce::dontSendNotification);
     }
 }
-
 // ==================================================
 // Prepare audio
 // ==================================================
@@ -1345,8 +1436,16 @@ void MainComponent::resized()
     auto area =
         getLocalBounds().reduced(25);
 
+    // ==================================================
+    // Title
+    // ==================================================
+
     titleLabel.setBounds(
         area.removeFromTop(45));
+
+    // ==================================================
+    // Main buttons
+    // ==================================================
 
     auto mainButtonArea =
         area.removeFromTop(50);
@@ -1366,6 +1465,10 @@ void MainComponent::resized()
             .removeFromLeft(150)
             .reduced(5));
 
+    // ==================================================
+    // Instrument / drum controls
+    // ==================================================
+
     auto instrumentArea =
         area.removeFromTop(45);
 
@@ -1381,7 +1484,7 @@ void MainComponent::resized()
 
     addNoteButton.setBounds(
         instrumentArea
-            .removeFromLeft(110)
+            .removeFromLeft(130)
             .reduced(3));
 
     drumLabel.setBounds(
@@ -1399,6 +1502,10 @@ void MainComponent::resized()
             .removeFromLeft(105)
             .reduced(3));
 
+    // ==================================================
+    // Note controls
+    // ==================================================
+
     auto noteArea =
         area.removeFromTop(40);
 
@@ -1412,25 +1519,9 @@ void MainComponent::resized()
             .removeFromLeft(100)
             .reduced(3));
 
-    startBeatLabel.setBounds(
-        noteArea
-            .removeFromLeft(50)
-            .reduced(3));
-
-    startBeatEditor.setBounds(
-        noteArea
-            .removeFromLeft(80)
-            .reduced(3));
-
-    durationLabel.setBounds(
-        noteArea
-            .removeFromLeft(70)
-            .reduced(3));
-
-    durationEditor.setBounds(
-        noteArea
-            .removeFromLeft(80)
-            .reduced(3));
+    // ==================================================
+    // Tempo / tracks
+    // ==================================================
 
     auto infoArea =
         area.removeFromTop(35);
@@ -1443,6 +1534,10 @@ void MainComponent::resized()
         infoArea
             .removeFromLeft(180));
 
+    // ==================================================
+    // Status
+    // ==================================================
+
     auto statusArea =
         getLocalBounds()
             .reduced(25)
@@ -1450,6 +1545,10 @@ void MainComponent::resized()
 
     statusLabel.setBounds(
         statusArea);
+
+    // ==================================================
+    // Project editor
+    // ==================================================
 
     projectInfo.setBounds(
         area.reduced(5));

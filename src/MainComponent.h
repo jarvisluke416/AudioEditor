@@ -74,8 +74,6 @@ private:
 
     // ==================================================
     // Names
-    //
-    // These MUST use the enum types from Project.h.
     // ==================================================
 
     juce::String instrumentName(
@@ -149,14 +147,6 @@ private:
     juce::Label noteLabel;
 
     juce::ComboBox noteBox;
-
-    juce::Label startBeatLabel;
-
-    juce::TextEditor startBeatEditor;
-
-    juce::Label durationLabel;
-
-    juce::TextEditor durationEditor;
 
     // ==================================================
     // Project information
