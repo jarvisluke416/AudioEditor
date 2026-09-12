@@ -10,7 +10,7 @@ on:
 jobs:
   build-windows:
     name: Build Windows Release
-    runs-on: windows-latest
+    runs-on: windows-2022
 
     steps:
 
@@ -92,6 +92,7 @@ jobs:
               Write-Host "AudioEditor.exe was not found."
               Write-Host ""
               Write-Host "Files produced by the build:"
+
               Get-ChildItem `
                 -Path "build" `
                 -Recurse `
@@ -143,7 +144,7 @@ jobs:
           if-no-files-found: error
 
       # ==================================================
-      # Create GitHub Release for version tags
+      # Create GitHub Release
       # ==================================================
 
       - name: Create GitHub Release
